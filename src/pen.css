@@ -4,7 +4,7 @@
 .pen, .pen-menu, .pen-input, .pen textarea{font:400 1.16em/1.45 Palatino, Optima, Georgia, serif;color:#331;}
 .pen:focus{outline:none;}
 .pen fieldset, img {border: 0;}
-.pen blockquote{padding-left:10px;margin-left:-14px;border-left:4px solid #1abf89;}
+.pen blockquote{padding-right: 30px;margin-right: -14px;border-right: 4px solid #1abf89;border-left:none;}
 .pen a{color:#1abf89;}
 .pen del{text-decoration:line-through;}
 .pen sub, .pen sup {font-size:75%;position:relative;vertical-align:text-top\9;}
