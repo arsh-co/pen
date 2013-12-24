@@ -66,7 +66,7 @@
   };
 
   Pen = function(config) {
-
+//    debugger;
     if(!config) return utils.log('can\'t find config', true);
 
     // merge user config
