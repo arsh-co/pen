@@ -14,7 +14,30 @@
   #mode{color:#1abf89;;cursor:pointer;}
   #mode.disabled{color:#666;}
   #mode:before{content: '\e813';}
+  #hinted{color:#1abf89;cursor:pointer;}
+  #hinted.disabled{color:#666;}
+  #hinted:before{content: '\e816';}
+
   #fork{position:fixed;right:0;top:0;}
+  
+  /*
+  When the webpage is printed
+  this media query hides extra elements,
+  and makes the text content fit the page.
+  */
+  @media print {
+    #fork, #toolbar {
+        display: none;
+    }
+    body {
+        width: 94%;
+        padding-top: 1em;
+        font-size: 12px;
+    }
+    html {
+        border-top: 0;
+    }
+  }
   </style>
   <link rel="stylesheet" href="src/pen.css" />
 </head>
@@ -22,6 +45,7 @@
 
 <div id="toolbar">
   <span id="mode" class="icon-mode"></span>
+  <span id="hinted" class="icon-pre disabled" title="Toggle Markdown Hints"></span>
 </div>
 
 <div data-toggle="pen" placeholder="im a placeholder">
@@ -29,20 +53,20 @@
 
   <p><b><i>Click to edit, Select to apply effect, click items of toolbar to toggle effects.</i></b></p>
   <hr>
-  <p>Horizontal-Rule can be insert by click「...」on the toolbar or just type「... 」/「--- 」/「*** 」at line start. Note that
+  <p>Horizontal-Rule can be inserted by click「...」on the toolbar or just type「... 」/「--- 」/「*** 」at line start. Note that
     there's a SPACE at the end of a command.</p>
   <hr>
   <p>To link or unlink, please press the <i>ENTER</i> key after you filled the input field with your a link. A <a
-    href="/sofish">link</a> can be unlink by apply an empty value to the input field.
+    href="/sofish">link</a> can be unlink by applying an empty value to the input field.
 
   <p>
   <ul>
-    <li>Ordered list and unordered list is supported.</li>
+    <li>Ordered list and unordered list are supported.</li>
     <li>Use the toolbar or use markdown syntax like「<b>1. </b>」,「<b>- </b>」or「<b>* </b>」</li>
   </ul>
   <blockquote>You can quote text by type「<b>&gt;</b>」at line start.</blockquote>
   <p>What about add underline to text? "<u>Stay Hungry, Stay Foolish - <i>Steve Jobs</i></u>".</p>
-  <pre>A code block is also support by type 「```」 at line start and press SPACE.</pre>
+  <pre>A code block is also supported by type 「```」 at line start and press SPACE.</pre>
   <p>For more, please checkout: <a href="https://github.com/sofish/pen#readme" target="_blank">https://github.com/sofish/pen#readme</a>
   </p>
 </div>
@@ -77,6 +101,18 @@
     }
   });
 
+  // toggle editor mode
+  document.querySelector('#hinted').addEventListener('click', function() {
+    var pen = document.querySelector('.pen')
+
+    if(pen.classList.contains('hinted')) {
+      pen.classList.remove('hinted');
+      this.classList.add('disabled');
+    } else {
+      pen.classList.add('hinted');
+      this.classList.remove('disabled');
+    }
+  });
 </script>
 </body>
 </html>
