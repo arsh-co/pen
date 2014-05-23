@@ -26,15 +26,14 @@
   };
 
   // shift a function
+  // schedules a function for later execution, with queuing and duplicate call canceling
+  // TODO: this function seems to be totally broken!
   utils.shift = function(key, fn, time) {
     time = time || 50;
-    var queue = this['_shift_fn' + key], timeout = 'shift_timeout' + key, current;
-    if ( queue ) {
-      queue.concat([fn, time]);
-    }
-    else {
-      queue = [[fn, time]];
-    }
+    var queue = this['_shift_fn' + key] || [],
+        timeout = 'shift_timeout' + key,
+        current;
+    queue.push([fn, time]);
     current = queue.pop();
     clearTimeout(this[timeout]);
     this[timeout] = setTimeout(function() {
@@ -70,8 +69,12 @@
   };
 
   Pen = function(config) {
-//    debugger;
-    if(!config) return utils.log('can\'t find config', true);
+    /** Pen Contructor **/
+
+    if(!config) {
+      utils.log('can\'t find config', true);
+      return;
+    }
 
     // merge user config
     var defaults = utils.merge(config);
@@ -90,6 +93,11 @@
 
     // assign config
     this.config = defaults;
+
+    // internal variables
+    this._menuLockedTo = null;
+    this._hasSelection = false;
+    this._barUpdater = null;  // the interval-id of the function used for updating active button of format bar
 
     // save the selection obj
     this._sel = doc.getSelection();
@@ -113,6 +121,11 @@
 
   // node effects
   Pen.prototype._effectNode = function(el, returnAsNodeName) {
+    if (typeof returnAsNodeName === 'unedfined') returnAsNodeName = false;
+    if (!el) {
+        return [];
+    }
+
     var nodes = [];
     while(el !== this.config.editor) {
       if(el.nodeName.match(/(?:[pubia]|h[1-6]|blockquote|[uo]l|li)/i)) {
@@ -164,13 +177,16 @@
 
       utils.shift('toggle_menu', function() {
         var range = that._sel;
-        if(!range.isCollapsed) {
-          //show menu
+        that._hasSelection = !range.isCollapsed;
+        if(that._hasSelection) {
           that._range = range.getRangeAt(0);
-          that.menu().highlight();
+          //show menu
+          if (!that._menuLockedTo) {
+            that.menu();
+          }
+          that.highlight();
         } else {
-          //hide menu
-          that._menu.style.display = 'none';
+          that.hideMenu();
         }
       }, 200);
     };
@@ -186,6 +202,7 @@
       var action = e.target.getAttribute('data-action');
 
       if(!action) return;
+      if (!that._hasSelection) return;  // only occurs when menu is locked
 
       var apply = function(value) {
         that._sel.removeAllRanges();
@@ -224,11 +241,11 @@
 
   // highlight menu
   Pen.prototype.highlight = function() {
-    var node = this._sel.focusNode
-      , effects = this._effectNode(node)
-      , menu = this._menu
-      , linkInput = menu.querySelector('input')
-      , highlight;
+    var node = this._sel.focusNode;
+    var effects = this._effectNode(node);
+    var menu = this._menu;
+    var linkInput = menu.querySelector('input');
+    var highlight;
 
     // remove all highlights
     [].slice.call(menu.querySelectorAll('.active')).forEach(function(el) {
@@ -248,7 +265,8 @@
       var tag = item.nodeName.toLowerCase();
       switch(tag) {
         case 'a':
-          return (menu.querySelector('input').value = item.href), highlight('createlink');
+          menu.querySelector('input').value = item.href;
+          return highlight('createlink');
         case 'i':
           return highlight('italic');
         case 'u':
@@ -259,12 +277,10 @@
           return highlight('insertunorderedlist');
         case 'ol':
           return highlight('insertorderedlist');
-        case 'ol':
-          return highlight('insertorderedlist');
         case 'li':
           return highlight('indent');
-        default :
-          highlight(tag);
+        default:
+          return highlight(tag);
       }
     });
 
@@ -327,20 +343,47 @@
     return this;
   };
 
-  // show menu
   Pen.prototype.menu = function() {
-
-    var offset = this._range.getBoundingClientRect()
+    /** Update the position of menu with respect to currently selected text or lock target
+     *
+     *   @returns this, to enable cascading
+     **/
+    var overElement = this._menuLockedTo ? this._menuLockedTo : this._range;
+    var offset = overElement.getBoundingClientRect()
       , top = offset.top - 10
       , left = offset.left + (offset.width / 2)
       , menu = this._menu;
 
-    // display block to caculate it's width & height
+    // display block to calculate it's width & height
     menu.style.display = 'block';
     menu.style.top = top - menu.clientHeight + 'px';
     menu.style.left = left - (menu.clientWidth/2) + 'px';
 
     return this;
+  };
+
+  Pen.prototype.hideMenu = function() {
+    if (!this._menuLockedTo) {
+      this._menu.style.display = 'none';
+    }
+  };
+
+  Pen.prototype.lockMenu = function(toElement) {
+    this._menuLockedTo = toElement;
+    this._barUpdater = setInterval(function(){
+        if (document.activeElement.contentEditable === 'true') {
+            editor.pen.highlight();
+        }
+    }, 100);
+    this.menu()
+  };
+
+  Pen.prototype.unlockMenu = function() {
+    this._menuLockedTo = null;
+    if (this._barUpdater) {
+        clearInterval(this._barUpdater);
+    }
+    this.hideMenu();
   };
 
   Pen.prototype.stay = function() {
