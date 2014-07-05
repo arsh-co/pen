@@ -401,7 +401,8 @@
 
     if(!isAJoke) {
       this._sel.removeAllRanges();
-      this._menu.style.display = 'none';
+      this.unlockMenu();
+      this.hideMenu();
     }
     this._isDestroyed = destroy;
     this.config.editor[attr]('contenteditable', '');
